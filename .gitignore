@@ -130,3 +130,7 @@ dmypy.json
 /coppelia/remoteApi.so
 /coppelia/sim.py
 /coppelia/simConst.py
+.DS_Store
+coppelia/remoteApi.dylib
+helix.png
+spline.png
