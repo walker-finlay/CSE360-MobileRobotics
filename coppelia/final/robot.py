@@ -7,6 +7,7 @@ import sim
 import numpy
 from numpy import array
 import pylab
+from math import pi
 pylab.interactive(True)
 
 # Put these in __init__()?
@@ -85,6 +86,13 @@ class robot():
             relative_object = self._get_handler(relative_object)
         res, position = sim.simxGetObjectOrientation(self.client_id, self.frame, relative_object, sim.simx_opmode_blocking)        
         return array(position)[2]
+
+    def normal_gamma(self):
+        """Get rotation about z as a positive number"""
+        res, orientation = sim.simxGetObjectOrientation(self.client_id, self.frame, -1, sim.simx_opmode_blocking)
+        orientation = orientation[2]
+        if orientation < 0: orientation = orientation + 2*pi
+        return orientation
     
     def get_object_position(self, object_name):
         # Get Object position in the world frame
