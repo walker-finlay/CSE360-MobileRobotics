@@ -1,5 +1,7 @@
 import numpy as np
 from math import sin, cos, pi, sqrt
+from dataclasses import dataclass, field
+from typing import Any
 
 # Constants
 omnirob_bounding_box = [0.356, 0.598, 0.2925]
@@ -36,6 +38,7 @@ def build_grid(points_on_ground, n_clusters_, labels, robo_coords, gw_n=50, exte
     scale = gw_n/global_n
     gw_points *= scale
     robo_coords *= scale
+    scaled_bounding_box = transform2d(np.array(omnirob_bounding_box), scale=scale)
 
     # # Create bounding box around obstacles, set to 1 in gridworld
     for n in np.arange(0,n_clusters_,dtype=np.intp):
@@ -43,8 +46,8 @@ def build_grid(points_on_ground, n_clusters_, labels, robo_coords, gw_n=50, exte
         lower_left = (current_obstacle_data.min(axis=0) + 0.5 ).astype(np.intc)     # Looks like:   [xmin, ymin]
         upper_right = (current_obstacle_data.max(axis=0) + 0.5 ).astype(np.intc)    # |             [xmax, ymax]
         if extend:  # Make room for rob to get close
-            lower_left += int(omnirob_bounding_box[1]/1.75)
-            upper_right += int(omnirob_bounding_box[1]/1.75)
+            lower_left -= int(scaled_bounding_box[1]/2 + 0.5)
+            upper_right += int(scaled_bounding_box[1]/2 + 0.5)
         gridworld[lower_left[0]:upper_right[0], lower_left[1]:upper_right[1]] = 1
 
     robo_coords = (np.array(robo_coords) + 0.5).astype(np.intc)
@@ -103,6 +106,12 @@ def path2waypoints(path, translation, scale, t):
         i += 1
     return waypoints
 
+# A* Stuff --------------------------------------------------------------------
+@dataclass(order=True)
+class PrioritizedItem:
+    priority: int
+    item: Any=field(compare=False)
+
 def _d(start,goal):
     "Euclidian distance"
     (x1,y1),(x2,y2) = start,goal
@@ -118,8 +127,6 @@ def astar(G, s, ds):
         "Heuristic for distance to goal = euclidian"
         return _d(n,ds)
 
-    open_set = []
-    heappush(open_set,s)
     came_from = {}
     came_from[s] = None
     n=len(G)
@@ -127,8 +134,10 @@ def astar(G, s, ds):
     g_score[s] = 0
     f_score = np.full((n,n),inf, dtype=np.float32)
     f_score[s] = _h(s)
+    open_set = []
+    heappush(open_set, PrioritizedItem(f_score[s], s))
     while open_set:
-        current = heappop(open_set)
+        current = heappop(open_set).item
         if current == ds:
             return backtrace(current, came_from)
         for neighbor in G[current]:
@@ -138,15 +147,17 @@ def astar(G, s, ds):
                 g_score[neighbor] = tentative_gscore
                 f_score[neighbor] = g_score[neighbor] + _h(neighbor)
                 if neighbor not in open_set:
-                    heappush(open_set, neighbor)
+                    heappush(open_set, PrioritizedItem(f_score[neighbor], neighbor))
     return None
 
-def transform2d(points, translation=np.array([0,0]), scale=1.0, rotation=None):
-    if rotation:
+# Utilities -------------------------------------------------------------------
+def transform2d(points, translation=None, scale=1.0, rotation=None):
+    if rotation is not None:
         R = np.array([[cos(rotation), -sin(rotation)],
                       [sin(rotation), cos(rotation)]])
         points = R.dot(points.T).T
-    points = (points + translation)
+    if translation is not None:
+        points = (points + translation)
     points = (points * scale)
     return points
 
