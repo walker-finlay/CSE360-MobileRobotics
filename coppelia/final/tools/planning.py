@@ -84,24 +84,22 @@ def backtrace(node, parent):
     return path
 
 
-def path2waypoints(path, n, m, t):
+def path2waypoints(path, translation, scale, t):
     """turn path from nxn grid into waypoints
     in mxm space with time t to get to adjacent squares
     centered at (0,0)"""
     time = 0
-    scale = m/n
     waypoints = []
     i = 0
     time_diag = t * (1 + (sqrt(2)/2))
+    path = transform2d(path, translation=translation/scale, scale=scale)
     for square in path:
         time = t
         if i < len(path)-1: # It should travel slower on diagonals
             next_square = path[i+1]
             if abs(next_square[0] - square[0]) > 0.1 and abs(next_square[1] - square[1]) > 0.1:
                 time = time_diag
-        # Scale & shift to (0,0)
-        scaled = (scale * square[0] - m/2, scale * square[1] - m/2)
-        waypoints.append([scaled,time])
+        waypoints.append([square,time])
         i += 1
     return waypoints
 
@@ -144,12 +142,12 @@ def astar(G, s, ds):
     return None
 
 def transform2d(points, translation=np.array([0,0]), scale=1.0, rotation=None):
-    points = (points + translation)
-    points = (points * scale)
     if rotation:
         R = np.array([[cos(rotation), -sin(rotation)],
                       [sin(rotation), cos(rotation)]])
         points = R.dot(points.T).T
+    points = (points + translation)
+    points = (points * scale)
     return points
 
 def get_launch_point(center, r, theta, gamma, gridworld, t, s):
