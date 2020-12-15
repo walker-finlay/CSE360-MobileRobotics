@@ -32,13 +32,13 @@ def sense(r, sim, debug=False, d=None):
     return points
 
 # FIXME: There must be an easier way to do dependency injection here...
-def spin_do(deg: float, r, sim, f = sense, n:int = 1, dbg: bool=False):
+def spin_do(r, sim, f = sense, n:int = None, dbg: bool=False):
     """Method for rotating by `deg` degrees - 
     Also used for initial mapping by calling `f`() n times during the rotation
     """
     data = np.empty((0,3))
     init_gamma = r.get_orientation()
-    if n:
+    if n is not None:
         data = np.concatenate((data, f(r, sim, debug=dbg, d=init_gamma)))
         action_angles = np.linspace(2*pi/n, 2*pi, n) + init_gamma
         action_angles = action_angles
@@ -48,13 +48,13 @@ def spin_do(deg: float, r, sim, f = sense, n:int = 1, dbg: bool=False):
     while abs(curr_gamma - init_gamma) > 0.05:
         r.send_motor_velocities([2,2,2,2])
         curr_gamma = r.get_orientation()
-        if f:                                                   
+        if f is not None:                                                   
             mask = abs(action_angles - curr_gamma%(2*pi)) < 0.1 # Are we at one of the angles, and which one?
             if np.any(mask):
                 action_angles = action_angles[~mask]            # Do it (sense_async)
                 data = np.concatenate((data, f(r, sim, debug=dbg, d=curr_gamma)))
     r.send_motor_velocities([0,0,0,0])
-    if f:
+    if f is not None:
         return data
 
     

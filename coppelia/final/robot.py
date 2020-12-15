@@ -151,5 +151,15 @@ class robot():
         points = self.laser_points()
         return points
 
-    def fire(self, v, theta):
-        pass
+    def set_joint_position(self, joint_name, theta):
+        joint_handle = self._get_handler(joint_name)
+        return_code = sim.simxSetJointTargetPosition(self.client_id, joint_handle, theta, sim.simx_opmode_blocking)
+    
+    def get_joint_position(self, joint_name):
+        joint_handle = self._get_handler(joint_name)
+        return_code, joint_pos = sim.simxGetJointPosition(self.client_id, joint_handle, sim.simx_opmode_blocking)
+        return joint_pos
+
+    def set_joint_velocity(self, joint_name, v):
+        joint_handle = self._get_handler(joint_name)
+        return_code = sim.simxSetJointTargetVelocity(self.client_id, joint_handle, v, sim.simx_opmode_blocking)
