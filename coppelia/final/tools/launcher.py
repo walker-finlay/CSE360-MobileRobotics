@@ -45,5 +45,5 @@ def get_launch_params(r):
 
 def fire(v, theta, r):
     r.set_joint_position('launcher_revolute_joint', theta)
-    while abs(r.get_joint_position('launcher_revolute_joint') - theta) > 0.025: time.sleep(1)
+    while abs(r.get_joint_position('launcher_revolute_joint') - theta) > 0.025: time.sleep(1) # FIXME: This is causin erors
     r.set_joint_velocity('launcher_prismatic_joint', v)
