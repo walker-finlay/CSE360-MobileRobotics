@@ -14,3 +14,5 @@ Additionally, the logs from the laser scanner are saved in `more_obstacles.csv` 
 - Splines
 - Check airspace
 - Fix pitch control
+- Unit tests
+- Exception handling
